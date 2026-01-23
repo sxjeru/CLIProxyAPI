@@ -2,8 +2,8 @@ name: docker-ghcr
 
 on:
   push:
-    tags:
-      - v*
+    branches:
+      - pack
 
 permissions:
   contents: read
@@ -32,7 +32,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate Build Metadata
         run: |
-          echo VERSION=`git describe --tags --always --dirty` >> $GITHUB_ENV
+          VERSION=$(git ls-remote --tags --sort=-v:refname https://github.com/router-for-me/CLIProxyAPI.git \
+            | grep -v '\^{}' \
+            | head -n 1 \
+            | awk -F/ '{print $NF}')
+          if [ -z "$VERSION" ]; then
+            VERSION=$(git describe --tags --always --dirty)
+          fi
+          echo VERSION=$VERSION >> $GITHUB_ENV
           echo COMMIT=`git rev-parse --short HEAD` >> $GITHUB_ENV
           echo BUILD_DATE=`date -u +%Y-%m-%dT%H:%M:%SZ` >> $GITHUB_ENV
       - name: Convert repository name to lowercase
